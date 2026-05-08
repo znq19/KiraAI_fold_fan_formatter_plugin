@@ -1,0 +1,39 @@
+{
+  "enabled": {
+    "name": "启用插件",
+    "type": "switch",
+    "default": true,
+    "hint": "是否启用转换功能"
+  },
+  "only_group": {
+    "name": "仅群聊生效",
+    "type": "switch",
+    "default": false,
+    "hint": "仅在群聊中处理，私聊不转换"
+  },
+  "tag_start": {
+    "name": "起始标签",
+    "type": "string",
+    "default": "[3p]",
+    "hint": "触发转换的起始标记，例如 [3p] 或 [dw]"
+  },
+  "tag_end": {
+    "name": "结束标签",
+    "type": "string",
+    "default": "[/3p]",
+    "hint": "触发转换的结束标记，例如 [/3p] 或 [/dw]"
+  },
+  "enable_auto_by_length": {
+    "name": "开启字符数自动触发",
+    "type": "switch",
+    "default": false,
+    "hint": "开启后，当消息文本长度超过阈值时自动转为合并转发"
+  },
+  "auto_length_threshold": {
+    "name": "字符数阈值",
+    "type": "integer",
+    "default": 100,
+    "minimum": 1,
+    "hint": "超过此字符数任何消息都将自动转换为合并转发"
+  }
+}

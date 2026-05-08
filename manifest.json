@@ -1,0 +1,8 @@
+{
+  "display_name": "折扇留穗·格式转换器",
+  "plugin_id": "fold_fan_formatter",
+  "version": "1.0.0",
+  "author": "znq19",
+  "description": "将AI输出的标签内容或过长消息转换为合并转发消息，避免刷屏、格式混乱，增强可读性。",
+  "repo": "https://github.com/znq19/KiraAI_fold_fan_formatter_plugin"
+}
