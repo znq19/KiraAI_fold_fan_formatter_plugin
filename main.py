@@ -16,7 +16,6 @@ class ThreePartFormatPlugin(BasePlugin):
         self.enable_auto_by_length = cfg.get("enable_auto_by_length", False)
         self.auto_length_threshold = int(cfg.get("auto_length_threshold", 100))
 
-        # 转义正则特殊字符
         escaped_start = re.escape(self.tag_start)
         escaped_end = re.escape(self.tag_end)
         self.pattern = re.compile(f'{escaped_start}(.*?){escaped_end}', re.DOTALL)
@@ -36,10 +35,14 @@ class ThreePartFormatPlugin(BasePlugin):
 
         new_chains = []
         for chain in message_chains:
+            # 只处理 MessageChain 对象，RootTagAction 等其它类型保持原样
+            if not isinstance(chain, MessageChain):
+                new_chains.append(chain)
+                continue
+
             full_text = "".join(
                 elem.text for elem in chain.message_list if isinstance(elem, Text)
             )
-            # 检查是否匹配标签
             match = self.pattern.search(full_text)
             should_convert = False
             inner_content = ""
@@ -47,15 +50,13 @@ class ThreePartFormatPlugin(BasePlugin):
             after = ""
 
             if match:
-                # 有标签，按标签拆分
                 before = full_text[:match.start()]
                 inner_content = match.group(1).strip()
                 after = full_text[match.end():]
                 should_convert = True
             elif self.enable_auto_by_length:
-                # 无标签但开启自动长度检测
                 if len(full_text) > self.auto_length_threshold:
-                    before = ""   # 整个消息作为内部内容
+                    before = ""
                     inner_content = full_text.strip()
                     after = ""
                     should_convert = True
@@ -65,7 +66,6 @@ class ThreePartFormatPlugin(BasePlugin):
                 new_chains.append(chain)
                 continue
 
-            # 获取适配器实例及客户端
             adapter_name = event.adapter.name
             adapter_inst = self.ctx.adapter_mgr.get_adapter(adapter_name)
             if not adapter_inst:
@@ -83,7 +83,6 @@ class ThreePartFormatPlugin(BasePlugin):
             self_id = str(event.self_id) if hasattr(event, 'self_id') else "0"
             bot_nick = getattr(adapter_inst.info, 'name', adapter_name)
 
-            # 构造合并转发节点（仅 inner_content）
             nodes = [{
                 "type": "node",
                 "data": {
@@ -93,7 +92,6 @@ class ThreePartFormatPlugin(BasePlugin):
                 }
             }]
 
-            # 依次发送：引导语 -> 合并转发卡片 -> 后续文本
             try:
                 if before.strip():
                     msg = [{"type": "text", "data": {"text": before}}]
@@ -107,8 +105,8 @@ class ThreePartFormatPlugin(BasePlugin):
                             "user_id": int(session_id),
                             "message": msg
                         })
-                    await asyncio.sleep(0.1)  # 微小延迟保证顺序
-                # 发送合并转发
+                    await asyncio.sleep(0.1)
+
                 if session_type == "group":
                     await client.send_action("send_forward_msg", {
                         "group_id": int(session_id),
@@ -119,6 +117,7 @@ class ThreePartFormatPlugin(BasePlugin):
                         "user_id": int(session_id),
                         "messages": nodes
                     })
+
                 if after.strip():
                     await asyncio.sleep(0.1)
                     msg = [{"type": "text", "data": {"text": after}}]
@@ -138,5 +137,5 @@ class ThreePartFormatPlugin(BasePlugin):
                 new_chains.append(chain)
                 continue
 
-            # 原链已被手动拆分发送，不再加入 new_chains
+            # 已通过手动发送处理，原链不加入 new_chains
         message_chains[:] = new_chains
