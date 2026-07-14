@@ -1,5 +1,7 @@
 # 折扇留穗·格式转换器
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/znq19/KiraAI_fold_fan_formatter_plugin)
+
 > 将AI的长篇大论或特定标签内容，优雅地折叠成一张合并转发卡片，如同折扇收起时留下一缕穗子，聊天记录清爽有序。
 
 ---
