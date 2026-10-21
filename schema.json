@@ -13,15 +13,19 @@
   },
   "tag_start": {
     "name": "起始标签",
-    "type": "string",
-    "default": "[3p]",
-    "hint": "触发转换的起始标记，例如 [3p] 或 [dw]"
+    "type": "list",
+    "default": [
+      "[3p]"
+    ],
+    "hint": "触发转换的起始标记，可添加多个（回车一个），例如 [3p] 或 [dw]"
   },
   "tag_end": {
     "name": "结束标签",
-    "type": "string",
-    "default": "[/3p]",
-    "hint": "触发转换的结束标记，例如 [/3p] 或 [/dw]"
+    "type": "list",
+    "default": [
+      "[/3p]"
+    ],
+    "hint": "触发转换的结束标记，可添加多个（回车一个）。任一起始标签与任一结束标签均视为合法配对（如 [3p]…[/p] 也会触发）；清空列表可关闭标签触发"
   },
   "enable_auto_by_length": {
     "name": "开启字符数自动触发",
