@@ -52,6 +52,16 @@ def _normalize_tag_list(value, default):
     return items
 
 
+def _supports_timeout(fn) -> bool:
+    """客户端 send_action 是否接受 timeout 关键字（老核心没有这个形参）。"""
+    try:
+        import inspect
+
+        return "timeout" in inspect.signature(fn).parameters
+    except Exception:
+        return False
+
+
 def _build_tag_pattern(starts, ends):
     """构造「任一起始标签 … 任一结束标签」的匹配正则。
 
@@ -82,6 +92,8 @@ class ThreePartFormatPlugin(BasePlugin):
         self.tag_ends = _normalize_tag_list(cfg.get("tag_end"), DEFAULT_TAG_ENDS)
         self.enable_auto_by_length = cfg.get("enable_auto_by_length", False)
         self.auto_length_threshold = int(cfg.get("auto_length_threshold", 100))
+        # 合并转发等待回包秒数（NapCat 默认 10s，转发要打包上传内容，常不够）
+        self.forward_timeout = float(cfg.get("forward_timeout", 60) or 0)
         self.pattern = _build_tag_pattern(self.tag_starts, self.tag_ends)
         self._migration_timer = None
         self._migration_task = None
@@ -306,12 +318,19 @@ class ThreePartFormatPlugin(BasePlugin):
                     sent_msgs.append((MessageChain([Text(before)]), _result_of(resp)))
                     await asyncio.sleep(0.1)
 
+                async def _call_forward(action, params):
+                    """合并转发专用调用：显式拉长超时（老核心无该形参时自动退回）。"""
+                    if self.forward_timeout > 0 and _supports_timeout(client.send_action):
+                        return await client.send_action(
+                            action, params, timeout=self.forward_timeout)
+                    return await client.send_action(action, params)
+
                 if session_type == "group":
-                    resp = await client.send_action("send_forward_msg", {
+                    resp = await _call_forward("send_forward_msg", {
                         "group_id": target, "messages": nodes
                     })
                 else:
-                    resp = await client.send_action("send_forward_msg", {
+                    resp = await _call_forward("send_forward_msg", {
                         "user_id": target, "messages": nodes
                     })
                 sent_steps.append("forward")
